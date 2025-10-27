@@ -257,4 +257,13 @@ public  class SyntaxAnalyzer {
         }
         return (pda.getLast().equals("h0"));
     }
+
+//    public static Boolean check(String program){
+//        if( LexicalAnalyzer.checkProgram(program)){
+//            program = program.replaceAll()
+//        }
+//        else{
+//            return false;
+//        }
+//    }
 }
