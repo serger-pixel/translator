@@ -180,5 +180,41 @@ public  class SyntaxAnalyzer {
         }
 
 
+        //3-ая группа
+        // Переходы для <Конст'>
+        jumpTable.put(":,C", List.of());
+        jumpTable.put("+,C", List.of());
+        jumpTable.put("-,C", List.of());
+        jumpTable.put("/,C", List.of());
+
+
+        // Переходы для <Идент'>
+        jumpTable.put(",,E", List.of());
+        jumpTable.put("=,E", List.of());
+        jumpTable.put("+,E", List.of());
+        jumpTable.put("-,E", List.of());
+        jumpTable.put("/,E", List.of());
+
+
+        // Переходы для <Список выбора'>
+        jumpTable.put("END_CASE,W", List.of());
+
+
+        // Переходы для <Выражение'>
+        jumpTable.put(";,R", List.of());
+        jumpTable.put("),R", List.of());
+        jumpTable.put("OF,R", List.of());
+        jumpTable.put("+,R", List.of("R", "S", "G"));
+        jumpTable.put("-,R", List.of("R", "S", "G"));
+        jumpTable.put("/,R", List.of("R", "S", "G"));
+
+
+        // Переходы для <Список переменных'>
+        jumpTable.put(":,M", List.of());
+        jumpTable.put("),M", List.of());
+
+
+        // Переходы для <Список операторов>
+        jumpTable.put("END,O", List.of());
     }
 }
