@@ -44,6 +44,7 @@ public  class SyntaxAnalyzer {
     private static LinkedHashMap<String, List<String>> jumpTable = new LinkedHashMap<>();
 
     private static void createJumpTable(){
+        char[] operators = {'+', '-', '/'};
         //1-ая группа
         jumpTable.put("BEGIN,K", List.of( "END", "O"));
         jumpTable.put("VAR,J", List.of( ";INTEGER:", "L"));
@@ -53,9 +54,9 @@ public  class SyntaxAnalyzer {
         jumpTable.put("READ,P", List.of( ";", "L"));
         jumpTable.put("CASE,P", List.of( ";END_CASE", "V", "OF", "Q"));
         jumpTable.put("~,F", List.of( ));
-        jumpTable.put("+,G", List.of( ));
-        jumpTable.put("/,G", List.of( ));
-        jumpTable.put("-,G", List.of( ));
+        for (char op : operators){
+            jumpTable.put(op+",G", List.of( ));
+        }
 
         for (char c = '0'; c <= '9'; c++) {
             jumpTable.put(c + ",A", List.of( ));
@@ -68,20 +69,24 @@ public  class SyntaxAnalyzer {
 
         //2-ая группа
 
+
         // Переходы для <Конст'>
         for (char c = '0'; c <= '9'; c++) {
             jumpTable.put(c + ",C", List.of( "C", "A"));
         }
+
 
         // Переходы для <Конст>
         for (char c = '0'; c <= '9'; c++) {
             jumpTable.put(c + ",B", List.of( "C", "A"));
         }
 
+
         // Переходы для <Идент'>
         for (char c = 'a'; c <= 'z'; c++) {
             jumpTable.put(c + ",E", List.of( "H", "E"));
         }
+
 
         // Переходы для <Идент>
         for (char c = 'a'; c <= 'z'; c++) {
@@ -94,10 +99,12 @@ public  class SyntaxAnalyzer {
             jumpTable.put(c + ",U", List.of(";", "N", ":", "B"));
         }
 
+
         // Переходы для <Список выбора'>
         for (char c = '0'; c <= '9'; c++) {
             jumpTable.put(c + ",W", List.of("W", "U"));
         }
+
 
         // Переходы для <Список выбора>
         for (char c = '0'; c <= '9'; c++) {
@@ -105,11 +112,11 @@ public  class SyntaxAnalyzer {
         }
 
 
-
         // Переходы для <Оператор>
         for (char c = 'a'; c <= 'z'; c++) {
             jumpTable.put(c + ",P", List.of("N"));
         }
+
 
         // Переходы для <Операнд'>
         for (char c = 'a'; c <= 'z'; c++) {
@@ -130,6 +137,48 @@ public  class SyntaxAnalyzer {
         }
         jumpTable.put("(,S", List.of("T"));
 
-        
+
+        // Переходы для <Выражения'>
+        for (char op : operators) {
+            jumpTable.put(op + ",R", List.of("R", "S", "G"));
+        }
+
+
+        // Переходы для <Выражение>
+        jumpTable.put("~,Q", List.of("R", "S"));
+        for (char c = 'a'; c <= 'z'; c++) {
+            jumpTable.put(c + ",Q", List.of("R", "S"));
+        }
+        for (char c = '0'; c <= '9'; c++) {
+            jumpTable.put(c + ",Q", List.of("R", "S"));
+        }
+        jumpTable.put("(,Q", List.of("R", "S"));
+
+
+        // Переходы для <Программа>
+        jumpTable.put("VAR,I", List.of("K", "J"));
+
+        // Переходы для <Список переменных>
+        for (char c = 'a'; c <= 'z'; c++) {
+            jumpTable.put(c + ",L", List.of("M", "D"));
+        }
+
+
+        // Переходы для <Список операторов>
+        String[] ops = {"READ", "CASE", "WRITE"};
+        for (char c = 'a'; c <= 'z'; c++) {
+            jumpTable.put(c + ",O", List.of("O", "P"));
+        }
+        for (String op : ops) {
+            jumpTable.put(op + ",O", List.of("O", "P"));
+        }
+
+
+        // Переходы для <Присваивание>
+        for (char c = 'a'; c <= 'z'; c++) {
+            jumpTable.put(c + ",N", List.of(";", "Q", "=", "D"));
+        }
+
+
     }
 }
