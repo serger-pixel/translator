@@ -10,7 +10,7 @@ public class SemanticAnalyzer {
     public static String yesValue = "+";
 
     //Символы для разделения строк
-    public static final String regexSep = "(;|:|OF)";
+    public static final String regexSep = "(;|:|OF|BEGIN|END)";
 
     //Символы-разделители
     public  static final String regexBreak = "( |\\n)";
@@ -40,25 +40,28 @@ public class SemanticAnalyzer {
         Pattern pattern = Pattern.compile(LexicalAnalyzer.regexIdentifier);
         for (String row : rows) {
             //Выражение
-            if (String.valueOf(row.charAt(0)).matches(LexicalAnalyzer.regexIdentifier)) {
-                String expression = row.substring(row.indexOf("="));
-                Matcher matcher = pattern.matcher(expression);
-                if (!tableValue.containsKey(String.valueOf(row.charAt(0)))) {
+            if (row.indexOf('=') != -1) {
+                String[] expression = row.split("(=)");
+                if (!tableValue.containsKey(expression[0])) {
                     return false;
                 }
+                Matcher matcher = pattern.matcher(expression[1]);
                 while (matcher.find()) {
                     if (tableValue.get(matcher.group()).equals(noValue)) {
                         return false;
                     }
                 }
-                tableValue.put(String.valueOf(row.charAt(0)), yesValue);
+                tableValue.put(expression[0], yesValue);
             }
 
             //WRITE/READ
-            if (String.valueOf(row.charAt(0)).matches("(READ)|(WRITE)")) {
-                Matcher matcher = pattern.matcher(row);
+            pattern = Pattern.compile("(READ)|(WRITE)|(CASE)");
+            Matcher matcher = pattern.matcher(row);
+            if (matcher.find()) {
+                pattern = Pattern.compile(LexicalAnalyzer.regexIdentifier);
+                matcher = pattern.matcher(row);
                 while (matcher.find()) {
-                    if (tableValue.get(matcher.group()).equals(noValue)) {
+                    if (!tableValue.containsKey(matcher.group()) || tableValue.get(matcher.group()).equals(noValue)){
                         return false;
                     }
                 }

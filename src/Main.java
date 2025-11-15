@@ -6,16 +6,16 @@ public class Main {
     public static void main(String[] args) {
 
         String program =
-                "VAR a, b, babag, a:INTEGER;\n" +
-                "BEGIN\n" +
-                "CASE (a+b) OF " +
+                "VAR a, b, babag:INTEGER;\n" +
+                "BEGIN\n"  + "\n"  +
+                "CASE (20+10) OF " +
                         "4: " +
-                        "a = (1 + (10));" +
+                        "a = ~(1 + (10) / 0);" +
                         "3:" +
                         "a = 2; " +
                 "END_CASE;\n"+
-                "READ(a, b, c);\n"+
-                "WRITE(a, b, c);\n"+
+                "READ(a, b);\n"+
+                "WRITE(a, b);\n"+
                 "END";
 
         Boolean result = SyntaxAnalyzer.check(program);
