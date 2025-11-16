@@ -1,112 +1,73 @@
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class AST {
-    //Базовые классы
-    //Класс абстрактного синтаксического дерева
+    // Базовый узел
     abstract class ASTNode {
-        public abstract void interpret(ExecutionContext ctx);
+        public abstract String toPrefix();
     }
 
+    // Выражения
+    abstract class ExpressionNode extends ASTNode {}
 
-    abstract class ExpressionNode extends ASTNode {
-        public abstract Integer evaluate(ExecutionContext ctx);
-
-        @Override
-        public void interpret(ExecutionContext ctx) {
-            evaluate(ctx); // просто вычислить (редко используется напрямую)
-        }
-    }
-
-    public abstract class StatementNode {
-        public abstract void interpret(ExecutionContext ctx);
-    }
-
-
-    //Операнды
     class NumberNode extends ExpressionNode {
         int value;
         NumberNode(int value) { this.value = value; }
-        @Override public Integer evaluate(ExecutionContext ctx) {
-            return value;
-        }
+        @Override public String toPrefix() { return String.valueOf(value); }
     }
 
     class VariableNode extends ExpressionNode {
         String name;
         VariableNode(String name) { this.name = name; }
-        @Override public Integer evaluate(ExecutionContext ctx) {
-            return ctx.getVariable(name);
-        }
+        @Override public String toPrefix() { return name; }
     }
 
     class BinaryOpNode extends ExpressionNode {
-        ExpressionNode left, right;
         String op;
-        BinaryOpNode(ExpressionNode left, String op, ExpressionNode right) {
-            this.left = left;
+        ExpressionNode left, right;
+        BinaryOpNode(String op, ExpressionNode left, ExpressionNode right) {
             this.op = op;
+            this.left = left;
             this.right = right;
         }
         @Override
-        public Integer evaluate(ExecutionContext ctx) {
-            int l = left.evaluate(ctx);
-            int r = right.evaluate(ctx);
-            switch (op) {
-                case "+": return l + r;
-                case "-": return l - r;
-                case "/":
-                    if (r == 0) throw new RuntimeException("Деление на ноль");
-                    return l / r;
-                default: throw new RuntimeException("Неизвестный оператор: " + op);
-            }
+        public String toPrefix() {
+            return op + " " + left.toPrefix() + " " + right.toPrefix();
         }
     }
 
+    // Операторы
+    abstract class StatementNode extends ASTNode {}
 
-    //Операторы
     class AssignNode extends StatementNode {
-        String varName;
+        String var;
         ExpressionNode expr;
-        AssignNode(String varName, ExpressionNode expr) {
-            this.varName = varName;
+        AssignNode(String var, ExpressionNode expr) {
+            this.var = var;
             this.expr = expr;
         }
         @Override
-        public void interpret(ExecutionContext ctx) {
-            Integer value = expr.evaluate(ctx);
-            ctx.setVariable(varName, value);
-        }
-    }
-
-    class WriteNode extends StatementNode {
-        List<String> varNames;
-        WriteNode(List<String> varNames) {
-            this.varNames = varNames;
-        }
-        @Override
-        public void interpret(ExecutionContext ctx) {
-            for (int i = 0; i < varNames.size(); i++) {
-                if (i > 0) System.out.print(" ");
-                System.out.print(ctx.getVariable(varNames.get(i)));
-            }
-            System.out.println();
+        public String toPrefix() {
+            return "= " + var + " " + expr.toPrefix();
         }
     }
 
     class ReadNode extends StatementNode {
-        static final Scanner scanner = new Scanner(System.in);
-        List<String> varNames;
-        ReadNode(List<String> varNames) {
-            this.varNames = varNames;
-        }
+        List<String> vars;
+        ReadNode(List<String> vars) { this.vars = vars; }
         @Override
-        public void interpret(ExecutionContext ctx) {
-            for (String name : varNames) {
-                System.out.print("Введите " + name + ": ");
-                int value = scanner.nextInt();
-                ctx.setVariable(name, value);
-            }
+        public String toPrefix() {
+            return "READ " + String.join(" ", vars);
+        }
+    }
+
+    class WriteNode extends StatementNode {
+        List<String> vars;
+        WriteNode(List<String> vars) { this.vars = vars; }
+        @Override
+        public String toPrefix() {
+            return "WRITE " + String.join(" ", vars);
         }
     }
 
@@ -122,41 +83,32 @@ public class AST {
     class SwitchNode extends StatementNode {
         ExpressionNode condition;
         List<CaseBranch> cases;
-        StatementNode elseBody;
-
-        SwitchNode(ExpressionNode condition, List<CaseBranch> cases, StatementNode elseBody) {
+        SwitchNode(ExpressionNode condition, List<CaseBranch> cases) {
             this.condition = condition;
             this.cases = cases;
-            this.elseBody = elseBody;
         }
-
         @Override
-        public void interpret(ExecutionContext ctx) {
-            Integer condVal = condition.evaluate(ctx);
+        public String toPrefix() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("CASE ").append(condition.toPrefix());
             for (CaseBranch branch : cases) {
-                Integer caseVal = branch.constant.evaluate(ctx);
-                if (condVal.equals(caseVal)) {
-                    branch.body.interpret(ctx);
-                    return;
-                }
+                sb.append(" ").append(branch.constant.toPrefix())
+                        .append(" (").append(branch.body.toPrefix()).append(")");
             }
-            if (elseBody != null) {
-                elseBody.interpret(ctx);
-            }
+            return sb.toString();
         }
     }
 
-    //Программа
     class ProgramNode extends StatementNode {
         List<StatementNode> statements;
         ProgramNode(List<StatementNode> statements) {
             this.statements = statements;
         }
         @Override
-        public void interpret(ExecutionContext ctx) {
-            for (StatementNode stmt : statements) {
-                stmt.interpret(ctx);
-            }
+        public String toPrefix() {
+            return statements.stream()
+                    .map(ASTNode::toPrefix)
+                    .collect(Collectors.joining("\n"));
         }
     }
 
