@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         // Пример программы на твоём языке
         String program = """
-            x = 5 + 3;
+            x = (5 + 3) / 2;
             READ(y, z);
             WRITE(x, y);
             CASE a OF

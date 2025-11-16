@@ -100,13 +100,24 @@ class Parser {
         return list;
     }
 
+    // --- Высокий уровень: выражения с + и - ---
     private AST.ExpressionNode parseExpression() {
-        return parseTerm(); // упрощённо: только + и -
+        AST.ExpressionNode expr = parseTerm(); // сначала парсим терм
+
+        // Обрабатываем цепочку: expr + term - term + ...
+        while (match("+", "-")) {
+            String op = tokens.get(current - 1).value; // только что съеденный оператор
+            AST.ExpressionNode right = parseTerm();
+            expr = new AST.BinaryOpNode(op, expr, right);
+        }
+        return expr;
     }
 
+    // --- Средний уровень: термы с * и / ---
     private AST.ExpressionNode parseTerm() {
         AST.ExpressionNode expr = parseFactor();
-        while (match("+", "-")) {
+
+        while (match("/")) {
             String op = tokens.get(current - 1).value;
             AST.ExpressionNode right = parseFactor();
             expr = new AST.BinaryOpNode(op, expr, right);
@@ -114,6 +125,7 @@ class Parser {
         return expr;
     }
 
+    // --- Низкий уровень: атомарные значения ---
     private AST.ExpressionNode parseFactor() {
         if (checkType(LexicalAnalyzer.TokenType.INTNUMBER)) {
             return new AST.NumberNode(Integer.parseInt(advance().value));
@@ -126,7 +138,7 @@ class Parser {
             expect(")");
             return expr;
         }
-        throw new RuntimeException("Ожидалось выражение");
+        throw new RuntimeException("Ожидался фактор (число, переменная или выражение в скобках)");
     }
 
     // Вспомогательные
