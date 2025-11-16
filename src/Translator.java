@@ -20,9 +20,11 @@ public class Translator {
 
 
 //Базовые классы
+    //Класс абстрактного синтаксического дерева
     abstract class ASTNode {
         public abstract void interpret(ExecutionContext ctx);
     }
+
 
     abstract class ExpressionNode extends ASTNode {
         public abstract Integer evaluate(ExecutionContext ctx);
