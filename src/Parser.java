@@ -39,6 +39,9 @@ class Parser {
     public AST.ProgramNode parseProgram() {
         List<AST.StatementNode> stmts = new ArrayList<>();
         while (currentToken() != null) {
+            if(currentToken().value.equals("BEGIN") || currentToken().value.equals("END")){
+                continue;
+            }
             stmts.add(parseStatement());
         }
         return new AST.ProgramNode(stmts);
@@ -141,8 +144,6 @@ class Parser {
         throw new RuntimeException("Ожидался фактор (число, переменная или выражение в скобках)");
     }
 
-
-    // Вспомогательные
     private String expectIdent() {
         if (!checkType(LexicalAnalyzer.TokenType.IDENTIFIER)) {
             throw new RuntimeException("Ожидался идентификатор");
