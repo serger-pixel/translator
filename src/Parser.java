@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+//Перевод программы в синтаксическое дерево
 class Parser {
     private final List<LexicalAnalyzer.Token> tokens;
     private int current = 0;
@@ -35,13 +36,6 @@ class Parser {
         return tok != null && tok.type == type;
     }
 
-    private boolean checkValue(String value) {
-        LexicalAnalyzer.Token tok = currentToken();
-        return tok != null && value.equals(tok.value);
-    }
-
-    // === ОСНОВНЫЕ МЕТОДЫ ===
-
     public AST.ProgramNode parseProgram() {
         List<AST.StatementNode> stmts = new ArrayList<>();
         while (currentToken() != null) {
@@ -52,10 +46,9 @@ class Parser {
 
     private AST.StatementNode parseStatement() {
         if (checkType(LexicalAnalyzer.TokenType.IDENTIFIER)) {
-            // x = ...
             String var = advance().value;
             if (match("=")) {
-                AST.ExpressionNode expr = parseExpression();
+                AST.ExpressionNode expr = parseExpressionFirst();
                 expect(";");
                 return new AST.AssignNode(var, expr);
             }
@@ -76,11 +69,11 @@ class Parser {
             return new AST.WriteNode(vars);
         }
         if (match("CASE")) {
-            AST.ExpressionNode cond = parseExpression();
+            AST.ExpressionNode cond = parseExpressionFirst();
             expect("OF");
             List<AST.CaseBranch> cases = new ArrayList<>();
             while (!match("END_CASE")) {
-                AST.ExpressionNode constVal = parseExpression(); // константа
+                AST.ExpressionNode constVal = parseExpressionFirst(); // константа
                 expect(":");
                 AST.StatementNode body = parseStatement(); // например: x = 0;
                 cases.add(new AST.CaseBranch(constVal, body));
@@ -100,33 +93,40 @@ class Parser {
         return list;
     }
 
-    // --- Высокий уровень: выражения с + и - ---
-    private AST.ExpressionNode parseExpression() {
-        AST.ExpressionNode expr = parseTerm(); // сначала парсим терм
+    private AST.ExpressionNode parseExpressionFirst() {
+        AST.ExpressionNode expr = parseExpressionSecond();
 
-        // Обрабатываем цепочку: expr + term - term + ...
         while (match("+", "-")) {
-            String op = tokens.get(current - 1).value; // только что съеденный оператор
-            AST.ExpressionNode right = parseTerm();
+            String op = tokens.get(current - 1).value;
+            AST.ExpressionNode right = parseExpressionSecond();
             expr = new AST.BinaryOpNode(op, expr, right);
         }
         return expr;
     }
 
-    // --- Средний уровень: термы с * и / ---
-    private AST.ExpressionNode parseTerm() {
-        AST.ExpressionNode expr = parseFactor();
+    private AST.ExpressionNode parseExpressionSecond() {
+        AST.ExpressionNode expr = parseExpressionThird();
 
         while (match("/")) {
             String op = tokens.get(current - 1).value;
-            AST.ExpressionNode right = parseFactor();
+            AST.ExpressionNode right = parseExpressionThird();
             expr = new AST.BinaryOpNode(op, expr, right);
         }
         return expr;
     }
 
-    // --- Низкий уровень: атомарные значения ---
-    private AST.ExpressionNode parseFactor() {
+    private AST.ExpressionNode parseExpressionThird() {
+        if (match("~")) {
+
+            AST.ExpressionNode operand = parseExpressionFouth();
+            return new AST.UnaryOpNode("-", operand);
+        }
+
+        return parseExpressionFouth();
+    }
+
+    private AST.ExpressionNode parseExpressionFouth() {
+
         if (checkType(LexicalAnalyzer.TokenType.INTNUMBER)) {
             return new AST.NumberNode(Integer.parseInt(advance().value));
         }
@@ -134,12 +134,13 @@ class Parser {
             return new AST.VariableNode(advance().value);
         }
         if (match("(")) {
-            AST.ExpressionNode expr = parseExpression();
+            AST.ExpressionNode expr = parseExpressionFirst();
             expect(")");
             return expr;
         }
         throw new RuntimeException("Ожидался фактор (число, переменная или выражение в скобках)");
     }
+
 
     // Вспомогательные
     private String expectIdent() {
