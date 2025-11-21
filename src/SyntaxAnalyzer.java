@@ -1,5 +1,8 @@
 import java.util.*;
 
+
+//Проверка синтаксиса программы
+
 public  class SyntaxAnalyzer {
     //Пустой такт
     private static String emptyProcess = "-";

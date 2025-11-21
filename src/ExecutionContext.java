@@ -1,6 +1,8 @@
 import java.util.HashMap;
 import java.util.Map;
 
+
+//Таблица переменных
 public class ExecutionContext {
     private final Map<String, Integer> variables = new HashMap<>();
 
