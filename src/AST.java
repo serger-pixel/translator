@@ -119,10 +119,13 @@ public class  AST {
         public String toPrefix() {
             StringBuilder sb = new StringBuilder();
             sb.append("CASE ").append(condition.toPrefix());
+            sb.append(" (");
             for (CaseBranch branch : cases) {
-                sb.append(" ").append(branch.constant.toPrefix())
-                        .append(" (").append(branch.body.toPrefix()).append(")");
+                sb.append(branch.constant.toPrefix())
+                        .append(" (").append(branch.body.toPrefix()).append(") ");
             }
+            sb.delete(sb.length() - 1, sb.length());
+            sb.append(")");
             return sb.toString();
         }
     }
