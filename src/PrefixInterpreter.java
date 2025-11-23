@@ -25,6 +25,7 @@ public class PrefixInterpreter {
             case "=" -> {
                 String var = tokens[i[0]++];
                 int value = evaluateExpression(tokens, i, ctx);
+                ctx.getVariable(var);
                 ctx.setVariable(var, value);
             }
 
@@ -34,6 +35,7 @@ public class PrefixInterpreter {
                     String var = tokens[i[0]++];
                     System.out.print("Введите " + var + ": ");
                     int val = sc.nextInt();
+                    ctx.getVariable(var);
                     ctx.setVariable(var, val);
                 }
             }
