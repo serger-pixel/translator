@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
 
-//Перевод программы в синтаксическое дерево
 class Parser {
     private final List<LexicalAnalyzer.Token> tokens;
     private int current = 0;
@@ -10,37 +9,16 @@ class Parser {
         this.tokens = tokens;
     }
 
-    private LexicalAnalyzer.Token currentToken() {
-        if (current >= tokens.size()) return null;
-        return tokens.get(current);
-    }
-
     private LexicalAnalyzer.Token advance() {
         return tokens.get(current++);
     }
 
-    private boolean match(String... values) {
-        LexicalAnalyzer.Token tok = currentToken();
-        if (tok == null) return false;
-        for (String val : values) {
-            if (val.equals(tok.value)) {
-                advance();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkType(LexicalAnalyzer.TokenType type) {
-        LexicalAnalyzer.Token tok = currentToken();
-        return tok != null && tok.type == type;
-    }
-
     public AST.ProgramNode parseProgram() {
         List<AST.StatementNode> stmts = new ArrayList<>();
-        while (currentToken() != null) {
-            if(currentToken().value.equals("BEGIN") || currentToken().value.equals("END")){
-                current++;
+        while (current < tokens.size()) {
+            String val = tokens.get(current).value;
+            if ("BEGIN".equals(val) || "END".equals(val)) {
+                current++; // пропускаем
                 continue;
             }
             stmts.add(parseStatement());
@@ -49,67 +27,69 @@ class Parser {
     }
 
     private AST.StatementNode parseStatement() {
-        if (match("VAR")){
+        String first = tokens.get(current).value;
+
+        if ("VAR".equals(first)) {
+            current++; // пропускаем VAR
             List<String> vars = parseIdentList();
-            expect(":");
-            expect("INTEGER");
-            expect(";");
+            current += 3; // пропускаем ':', 'INTEGER', ';'
             return new AST.VarDeclNode(vars);
         }
 
-        if (checkType(LexicalAnalyzer.TokenType.IDENTIFIER)) {
-            String var = advance().value;
-            if (match("=")) {
-                AST.ExpressionNode expr = parseExpressionFirst();
-                expect(";");
-                return new AST.AssignNode(var, expr);
-            }
-            throw new RuntimeException("Ожидалось '=' после идентификатора");
-        }
-        if (match("READ")) {
-            expect("(");
+        if ("READ".equals(first)) {
+            current++; // READ
+            current++; // '('
             List<String> vars = parseIdentList();
-            expect(")");
-            expect(";");
+            current += 2; // ')', ';'
             return new AST.ReadNode(vars);
         }
-        if (match("WRITE")) {
-            expect("(");
+
+        if ("WRITE".equals(first)) {
+            current++; // WRITE
+            current++; // '('
             List<String> vars = parseIdentList();
-            expect(")");
-            expect(";");
+            current += 2; // ')', ';'
             return new AST.WriteNode(vars);
         }
-        if (match("CASE")) {
+
+        if ("CASE".equals(first)) {
+            current++; // CASE
             AST.ExpressionNode cond = parseExpressionFirst();
-            expect("OF");
+            current++; // OF
             List<AST.CaseBranch> cases = new ArrayList<>();
-            while (!match("END_CASE")) {
-                AST.ExpressionNode constVal = parseExpressionFirst(); // константа
-                expect(":");
-                AST.StatementNode body = parseStatement(); // например: x = 0;
+            while (!"END_CASE".equals(tokens.get(current).value)) {
+                AST.ExpressionNode constVal = parseExpressionFirst();
+                current++; // ':'
+                AST.StatementNode body = parseStatement();
                 cases.add(new AST.CaseBranch(constVal, body));
             }
-            expect(";");
+            current++; // END_CASE
+            current++; // ';'
             return new AST.SwitchNode(cond, cases);
         }
-        throw new RuntimeException("Неизвестный оператор");
+
+        // Присваивание: идентификатор = выражение ;
+        String var = advance().value; // идентификатор
+        current++; // '='
+        AST.ExpressionNode expr = parseExpressionFirst();
+        current++; // ';'
+        return new AST.AssignNode(var, expr);
     }
 
     private List<String> parseIdentList() {
         List<String> list = new ArrayList<>();
-        list.add(expectIdent());
-        while (match(",")) {
-            list.add(expectIdent());
+        list.add(advance().value); // первый идентификатор
+        while (",".equals(tokens.get(current).value)) {
+            current++; // ','
+            list.add(advance().value); // следующий идентификатор
         }
         return list;
     }
 
     private AST.ExpressionNode parseExpressionFirst() {
         AST.ExpressionNode expr = parseExpressionSecond();
-
-        while (match("+", "-")) {
-            String op = tokens.get(current - 1).value;
+        while ("+".equals(tokens.get(current).value) || "-".equals(tokens.get(current).value)) {
+            String op = advance().value;
             AST.ExpressionNode right = parseExpressionSecond();
             expr = new AST.BinaryOpNode(op, expr, right);
         }
@@ -118,9 +98,8 @@ class Parser {
 
     private AST.ExpressionNode parseExpressionSecond() {
         AST.ExpressionNode expr = parseExpressionThird();
-
-        while (match("/")) {
-            String op = tokens.get(current - 1).value;
+        while ("/".equals(tokens.get(current).value)) {
+            String op = advance().value;
             AST.ExpressionNode right = parseExpressionThird();
             expr = new AST.BinaryOpNode(op, expr, right);
         }
@@ -128,41 +107,28 @@ class Parser {
     }
 
     private AST.ExpressionNode parseExpressionThird() {
-        if (match("~")) {
-
+        if ("~".equals(tokens.get(current).value)) {
+            current++; // '~'
             AST.ExpressionNode operand = parseExpressionFouth();
             return new AST.UnaryOpNode("-", operand);
         }
-
         return parseExpressionFouth();
     }
 
     private AST.ExpressionNode parseExpressionFouth() {
-
-        if (checkType(LexicalAnalyzer.TokenType.INTNUMBER)) {
-            return new AST.NumberNode(Integer.parseInt(advance().value));
+        LexicalAnalyzer.TokenType type = tokens.get(current).type;
+        if (type == LexicalAnalyzer.TokenType.INTNUMBER) {
+            int val = Integer.parseInt(advance().value);
+            return new AST.NumberNode(val);
         }
-        if (checkType(LexicalAnalyzer.TokenType.IDENTIFIER)) {
-            return new AST.VariableNode(advance().value);
+        if (type == LexicalAnalyzer.TokenType.IDENTIFIER) {
+            String name = advance().value;
+            return new AST.VariableNode(name);
         }
-        if (match("(")) {
-            AST.ExpressionNode expr = parseExpressionFirst();
-            expect(")");
-            return expr;
-        }
-        throw new RuntimeException("Ожидался фактор (число, переменная или выражение в скобках)");
-    }
-
-    private String expectIdent() {
-        if (!checkType(LexicalAnalyzer.TokenType.IDENTIFIER)) {
-            throw new RuntimeException("Ожидался идентификатор");
-        }
-        return advance().value;
-    }
-
-    private void expect(String symbol) {
-        if (!match(symbol)) {
-            throw new RuntimeException("Ожидался символ: " + symbol);
-        }
+        // Скобки
+        current++; // '('
+        AST.ExpressionNode expr = parseExpressionFirst();
+        current++; // ')'
+        return expr;
     }
 }
