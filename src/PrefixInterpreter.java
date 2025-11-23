@@ -6,7 +6,7 @@ public class PrefixInterpreter {
     public static void evaluateLine(String line, ExecutionContext ctx) {
         if (line.trim().isEmpty()) return;
         String[] tokens = line.trim().split("\\s+");
-        int[] index = {0}; // mutable индекс
+        int[] index = {0};
         evaluateStatement(tokens, index, ctx);
     }
 
@@ -42,10 +42,11 @@ public class PrefixInterpreter {
                 List<Integer> vals = new ArrayList<>();
                 while (i[0] < tokens.length) {
                     String tok = tokens[i[0]++];
+
                     try {
                         vals.add(Integer.parseInt(tok));
                     } catch (NumberFormatException e) {
-                        vals.add(ctx.getVariable(tok));
+                        vals.add(ctx.getVariable(tok)); // <-- может выбросить исключение, если переменная не существует — оставляем
                     }
                 }
                 for (int j = 0; j < vals.size(); j++) {
@@ -56,68 +57,45 @@ public class PrefixInterpreter {
             }
 
             case "CASE" -> {
-                int cond = evaluateExpression(tokens, i, ctx);
+                int condValue = evaluateExpression(tokens, i, ctx);
+                i[0]++;
+
                 boolean matched = false;
+                while (i[0] < tokens.length && !")".equals(tokens[i[0]])) {
+                    int caseVal = Integer.parseInt(tokens[i[0]++]);
+                    i[0]++;
 
-                while (i[0] < tokens.length) {
-                    // Попытка прочитать константу
-                    try {
-                        int caseVal = Integer.parseInt(tokens[i[0]]);
-                        i[0]++; // consume константу
-
-                        if (i[0] >= tokens.length) break;
-
-                        // Следующий токен — тело в скобках?
-                        String bodyToken = tokens[i[0]];
-                        if (bodyToken.startsWith("(") && bodyToken.endsWith(")")) {
-                            i[0]++; // consume тело
-                            if (cond == caseVal && !matched) {
-                                // Убираем скобки
-                                String inner = bodyToken.substring(1, bodyToken.length() - 1).trim();
-                                if (!inner.isEmpty()) {
-                                    evaluateLine(inner, ctx); // рекурсивно
-                                }
-                                matched = true;
-                            }
-                        } else {
-                            // Если нет скобок — ошибка или другой формат
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        // Константа не число — конец списка case
-                        break;
+                    int bodyStart = i[0];
+                    int depth = 1;
+                    while (i[0] < tokens.length && depth > 0) {
+                        if ("(".equals(tokens[i[0]])) depth++;
+                        else if (")".equals(tokens[i[0]])) depth--;
+                        if (depth > 0) i[0]++;
                     }
+
+                    if (caseVal == condValue && !matched) {
+                        String bodyStr = String.join(" ", Arrays.copyOfRange(tokens, bodyStart, i[0]));
+                        evaluateLine(bodyStr, ctx);
+                        matched = true;
+                    }
+                    i[0]++;
                 }
             }
-
-            default -> throw new RuntimeException("Неизвестный оператор: " + op);
         }
     }
 
     // Вычисление выражения в префиксной форме
     private static int evaluateExpression(String[] tokens, int[] i, ExecutionContext ctx) {
-        if (i[0] >= tokens.length) {
-            throw new RuntimeException("Неожиданный конец выражения");
-        }
-
         String token = tokens[i[0]++];
 
-        // Число?
         try {
             return Integer.parseInt(token);
         } catch (NumberFormatException ignored) {}
 
-        // Унарный минус? (в твоём случае, возможно, "~")
-        if ("~".equals(token)) {
-            return -evaluateExpression(tokens, i, ctx);
-        }
-
-        // Переменная?
         if (!isOperator(token)) {
             return ctx.getVariable(token);
         }
 
-        // Бинарная операция
         int left = evaluateExpression(tokens, i, ctx);
         int right = evaluateExpression(tokens, i, ctx);
 
@@ -128,7 +106,7 @@ public class PrefixInterpreter {
                 if (right == 0) throw new RuntimeException("Деление на ноль");
                 yield left / right;
             }
-            default -> throw new RuntimeException("Неизвестный оператор: " + token);
+            default -> 0;
         };
     }
 
