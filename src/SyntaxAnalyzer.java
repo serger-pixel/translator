@@ -214,13 +214,13 @@ public  class SyntaxAnalyzer {
     }
 
 
-    public static Boolean read(ArrayDeque<String> input){
+    public static Boolean read(ArrayDeque<LexicalAnalyzer.Token> input){
         ArrayDeque<String> pda = new ArrayDeque<String>();
         pda.add("h0");
         pda.add("I");
         createJumpTable();
         while (!input.isEmpty()) {
-            String currentInput = input.getFirst();
+            String currentInput = input.getFirst().value;
             String currentPDA = pda.getLast();
             String argument = currentInput + "," + currentPDA;
             if (jumpTable.containsKey(argument)) {
@@ -236,6 +236,7 @@ public  class SyntaxAnalyzer {
                 }
             }
             else{
+                System.out.println("Ошибка при анализе: " + input.getFirst().type + "(" + input.getFirst().value + ")");
                 return false;
             }
         }

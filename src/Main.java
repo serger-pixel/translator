@@ -1,3 +1,4 @@
+import java.util.ArrayDeque;
 import java.util.List;
 
 
@@ -7,13 +8,10 @@ public class Main {
         String program = """
             VAR x, y: INTEGER;
             BEGIN
-            x = ~5 + 3 / 2;
+            x = ~5 + 30 / 1;
             y = 2;
             WRITE(x, y);
-            CASE (20) OF
-              10: x = 0;
-              20: y = 1;
-            END_CASE;
+            CASE;
             WRITE(x, y);
             END
             """;
@@ -24,17 +22,34 @@ public class Main {
         tokens.forEach(System.out::println);
         System.out.println("\n--- Префиксная запись ---");
 
-       // 2. Перевод исходной програмыы абстрактное синтаксическое дерево
+
+        // 2. Проверка синтаксиса
+        ArrayDeque<LexicalAnalyzer.Token> tokenStack = new ArrayDeque<>();
+        for (var token: tokens){
+            if (token.type == LexicalAnalyzer.TokenType.INTNUMBER){
+                for(int i = 0; i < token.value.length(); i++){
+                    tokenStack.add(new LexicalAnalyzer.Token(LexicalAnalyzer.TokenType.INTNUMBER, String.valueOf(token.value.charAt(i))));
+                }
+            }
+            else{
+                tokenStack.add(token);
+            }
+
+
+        }
+        SyntaxAnalyzer.read(tokenStack);
+
+       // 3. Перевод исходной програмы абстрактное синтаксическое дерево
         Parser parser = new Parser(tokens);
         AST.ProgramNode ast = parser.parseProgram();
 
         ExecutionContext ctx = new ExecutionContext();
 
-        // 3. абстрактного синтаксического дерева в префиксную форму
+        // 4. абстрактного синтаксического дерева в префиксную форму
         String prefix = ast.toPrefix();
         System.out.println(prefix);
 
-        // Примеры строк
+//         Примеры строк
         String[] lines = prefix.split("\\n");
         for (var line: lines){
             PrefixInterpreter.evaluateLine(line, ctx);
