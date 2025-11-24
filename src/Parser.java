@@ -30,32 +30,32 @@ class Parser {
         String first = tokens.get(current).value;
 
         if ("VAR".equals(first)) {
-            current++; // пропускаем VAR
+            current++;
             List<String> vars = parseIdentList();
-            current += 3; // пропускаем ':', 'INTEGER', ';'
+            current += 3;
             return new AST.VarDeclNode(vars);
         }
 
         if ("READ".equals(first)) {
-            current++; // READ
-            current++; // '('
+            current++;
+            current++;
             List<String> vars = parseIdentList();
-            current += 2; // ')', ';'
+            current += 2;
             return new AST.ReadNode(vars);
         }
 
         if ("WRITE".equals(first)) {
-            current++; // WRITE
-            current++; // '('
+            current++;
+            current++;
             List<String> vars = parseIdentList();
-            current += 2; // ')', ';'
+            current += 2;
             return new AST.WriteNode(vars);
         }
 
         if ("CASE".equals(first)) {
-            current++; // CASE
+            current++;
             AST.ExpressionNode cond = parseExpressionFirst();
-            current++; // OF
+            current++;
             List<AST.CaseBranch> cases = new ArrayList<>();
             while (!"END_CASE".equals(tokens.get(current).value)) {
                 AST.ExpressionNode constVal = parseExpressionFirst();
@@ -63,25 +63,25 @@ class Parser {
                 AST.StatementNode body = parseStatement();
                 cases.add(new AST.CaseBranch(constVal, body));
             }
-            current++; // END_CASE
-            current++; // ';'
+            current++;
+            current++;
             return new AST.SwitchNode(cond, cases);
         }
 
-        // Присваивание: идентификатор = выражение ;
+
         String var = advance().value; // идентификатор
-        current++; // '='
+        current++;
         AST.ExpressionNode expr = parseExpressionFirst();
-        current++; // ';'
+        current++;
         return new AST.AssignNode(var, expr);
     }
 
     private List<String> parseIdentList() {
         List<String> list = new ArrayList<>();
-        list.add(advance().value); // первый идентификатор
+        list.add(advance().value);
         while (",".equals(tokens.get(current).value)) {
-            current++; // ','
-            list.add(advance().value); // следующий идентификатор
+            current++;
+            list.add(advance().value);
         }
         return list;
     }
@@ -125,10 +125,10 @@ class Parser {
             String name = advance().value;
             return new AST.VariableNode(name);
         }
-        // Скобки
-        current++; // '('
+
+        current++;
         AST.ExpressionNode expr = parseExpressionFirst();
-        current++; // ')'
+        current++;
         return expr;
     }
 }

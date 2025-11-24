@@ -12,7 +12,7 @@ public class ExecutionContext {
 
     public Integer getVariable(String name) {
         if (!variables.containsKey(name)) {
-            // Семантический анализ уже должен был поймать это!
+
             throw new RuntimeException("Переменная не инициализирована: " + name);
         }
         return variables.get(name);

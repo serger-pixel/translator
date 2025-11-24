@@ -2,7 +2,7 @@ import java.util.*;
 
 public class PrefixInterpreter {
 
-    // Точка входа: выполняет ОДНУ строку префиксной записи
+
     public static void evaluateLine(String line, ExecutionContext ctx) {
         if (line.trim().isEmpty()) return;
         String[] tokens = line.trim().split("\\s+");
@@ -10,7 +10,7 @@ public class PrefixInterpreter {
         evaluateStatement(tokens, index, ctx);
     }
 
-    // Выполнение оператора
+
     private static void evaluateStatement(String[] tokens, int[] i, ExecutionContext ctx) {
         if (i[0] >= tokens.length) return;
         String op = tokens[i[0]++];
@@ -86,7 +86,7 @@ public class PrefixInterpreter {
         }
     }
 
-    // Вычисление выражения в префиксной форме
+
     private static int evaluateExpression(String[] tokens, int[] i, ExecutionContext ctx) {
         String token = tokens[i[0]++];
 
