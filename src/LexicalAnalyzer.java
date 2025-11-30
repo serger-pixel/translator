@@ -73,28 +73,23 @@ public class LexicalAnalyzer {
         }
 
 
-        String cleanInput = program.replaceAll("\\s+", "");
+        String cleanProgram = program.replaceAll("\\s+", "");
 
-        int i = 0; // указатель в cleanInput
-        int tokenIndex = 0; // текущий индекс в списке образцов
 
-        // Шаг 3: проходим по строке
-        while (i < cleanInput.length() && tokenIndex < tokens.size()) {
-            String currentPattern = tokens.get(tokenIndex).value;
-            int len = currentPattern.length();
+        for (Token token : tokens) {
+            // Находим первое вхождение токена
+            int index = cleanProgram.indexOf(token.value);
 
-            if (i + len > cleanInput.length()) {
-                throw new RuntimeException("Недопустимая лексема: " + cleanInput.substring(i));
+            // Если токен не найден вообще
+            if (index != 0) {
+                throw new RuntimeException("Недопустимая лексема: " + cleanProgram.substring(0, index));
             }
 
-            String substring = cleanInput.substring(i, i + len);
-            if (substring.equals(currentPattern)) {
-                i += len;
-                tokenIndex++;
-            } else {
-                throw new RuntimeException("Недопустимая лексема: " + substring);
-            }
+
+            cleanProgram = cleanProgram.substring(token.value.length());
         }
+
+
         return tokens;
     }
 
