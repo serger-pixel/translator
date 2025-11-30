@@ -10,6 +10,35 @@ public  class SyntaxAnalyzer {
     private static String fullProcess = "+";
 
 
+    //Таблица нетерминалов
+    private static Map<String, String> nonterminalMap = Map.ofEntries(
+            Map.entry("A", "<Цифра>"),
+            Map.entry("B", "<Конст>"),
+            Map.entry("C", "<Конст'>"),
+            Map.entry("D", "<Идент>"),
+            Map.entry("E", "<Идент'>"),
+            Map.entry("F", "<Ун. оп.>"),
+            Map.entry("G", "<Бин. оп.>"),
+            Map.entry("H", "<Буква>"),
+            Map.entry("I", "<Программа>"),
+            Map.entry("J", "<Объявление переменных>"),
+            Map.entry("K", "<Описание вычислений>"),
+            Map.entry("L", "<Список переменных>"),
+            Map.entry("M", "<Список переменных'>"),
+            Map.entry("N", "<Присваивание>"),
+            Map.entry("O", "<Список операторов>"),
+            Map.entry("P", "<Оператор>"),
+            Map.entry("Q", "<Выражение>"),
+            Map.entry("R", "<Выражение'>"),
+            Map.entry("S", "<Операнд>"),
+            Map.entry("T", "<Операнд'>"),
+            Map.entry("U", "<Выбор>"),
+            Map.entry("V", "<Список выбора>"),
+            Map.entry("W", "<Список выбора'>"),
+            Map.entry("X", "<Список объявления>"),
+            Map.entry("Y", "<Список объявления'>")
+    );
+
 
     //Таблица переходов
     private static LinkedHashMap<String, List<String>> jumpTable = new LinkedHashMap<>();
@@ -236,7 +265,16 @@ public  class SyntaxAnalyzer {
                 }
             }
             else{
-                System.out.println("Ошибка при анализе: " + input.getFirst().type + "(" + input.getFirst().value + ")");
+                System.out.println("Синтаксическа ошибка!");
+                System.out.println("Входная лента:");
+                while (!input.isEmpty()){
+                    System.out.print(input.pop().value + "|");
+                }
+                System.out.println("\n");
+                System.out.println("Магазинный автомат:");
+                while (!pda.isEmpty()){
+                    System.out.print(pda.pop() + "|");
+                }
                 return false;
             }
         }
