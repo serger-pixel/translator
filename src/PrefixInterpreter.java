@@ -16,20 +16,20 @@ public class PrefixInterpreter {
         String op = tokens[i[0]++];
 
         switch (op) {
-            case "VAR" -> {
+            case "VAR": {
                 while (i[0] < tokens.length) {
                     ctx.setVariable(tokens[i[0]++], 0);
                 }
+                break;
             }
-
-            case "=" -> {
+            case "=": {
                 String var = tokens[i[0]++];
                 int value = evaluateExpression(tokens, i, ctx);
                 ctx.getVariable(var);
                 ctx.setVariable(var, value);
+                break;
             }
-
-            case "READ" -> {
+            case "READ": {
                 Scanner sc = new Scanner(System.in);
                 while (i[0] < tokens.length) {
                     String var = tokens[i[0]++];
@@ -38,9 +38,9 @@ public class PrefixInterpreter {
                     ctx.getVariable(var);
                     ctx.setVariable(var, val);
                 }
+                break;
             }
-
-            case "WRITE" -> {
+            case "WRITE": {
                 List<Integer> vals = new ArrayList<>();
                 while (i[0] < tokens.length) {
                     String tok = tokens[i[0]++];
@@ -48,7 +48,7 @@ public class PrefixInterpreter {
                     try {
                         vals.add(Integer.parseInt(tok));
                     } catch (NumberFormatException e) {
-                        vals.add(ctx.getVariable(tok)); // <-- может выбросить исключение, если переменная не существует — оставляем
+                        vals.add(ctx.getVariable(tok));
                     }
                 }
                 for (int j = 0; j < vals.size(); j++) {
@@ -56,9 +56,9 @@ public class PrefixInterpreter {
                     System.out.print(vals.get(j));
                 }
                 System.out.println();
+                break;
             }
-
-            case "CASE" -> {
+            case "CASE": {
                 int condValue = evaluateExpression(tokens, i, ctx);
                 i[0]++;
 
@@ -82,6 +82,7 @@ public class PrefixInterpreter {
                     }
                     i[0]++;
                 }
+                break;
             }
         }
     }
@@ -101,15 +102,16 @@ public class PrefixInterpreter {
         int left = evaluateExpression(tokens, i, ctx);
         int right = evaluateExpression(tokens, i, ctx);
 
-        return switch (token) {
-            case "+" -> left + right;
-            case "-" -> left - right;
-            case "/" -> {
-                if (right == 0) throw new RuntimeException("Деление на ноль");
-                yield left / right;
-            }
-            default -> 0;
-        };
+        if ("+".equals(token)) {
+            return left + right;
+        } else if ("-".equals(token)) {
+            return left - right;
+        } else if ("/".equals(token)) {
+            if (right == 0) throw new RuntimeException("Деление на ноль");
+            return left / right;
+        } else {
+            return 0;
+        }
     }
 
     private static boolean isOperator(String s) {

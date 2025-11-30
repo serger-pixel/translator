@@ -1,11 +1,11 @@
 import java.util.ArrayList;
 import java.util.List;
 
-class Parser {
+class TranslatorToPrefix {
     private final List<LexicalAnalyzer.Token> tokens;
     private int current = 0;
 
-    Parser(List<LexicalAnalyzer.Token> tokens) {
+    TranslatorToPrefix(List<LexicalAnalyzer.Token> tokens) {
         this.tokens = tokens;
     }
 
