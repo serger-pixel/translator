@@ -69,11 +69,31 @@ public class LexicalAnalyzer {
                     break;
                 }
             }
-
-            if (!matched) {
-                throw new RuntimeException("Неподдерживаемая лексема " + lexeme + " на позиции: " + matcher.start());
-            }
             pos = matcher.end();
+        }
+
+
+        String cleanInput = program.replaceAll("\\s+", "");
+
+        int i = 0; // указатель в cleanInput
+        int tokenIndex = 0; // текущий индекс в списке образцов
+
+        // Шаг 3: проходим по строке
+        while (i < cleanInput.length() && tokenIndex < tokens.size()) {
+            String currentPattern = tokens.get(tokenIndex).value;
+            int len = currentPattern.length();
+
+            if (i + len > cleanInput.length()) {
+                throw new RuntimeException("Недопустимая лексема: " + cleanInput.substring(i));
+            }
+
+            String substring = cleanInput.substring(i, i + len);
+            if (substring.equals(currentPattern)) {
+                i += len;
+                tokenIndex++;
+            } else {
+                throw new RuntimeException("Недопустимая лексема: " + substring);
+            }
         }
         return tokens;
     }
